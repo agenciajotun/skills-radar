@@ -1,0 +1,49 @@
+name: Atualizar ranking diário
+
+# O cron do GitHub Actions usa UTC e pode atrasar; a rotina não depende de pontualidade.
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trending-diario-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  atualizar-ranking:
+    name: Coletar e publicar dados
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Coletar dados
+        env:
+          # O gh já vem instalado no runner Ubuntu.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/coletar-trending.mjs
+
+      # Não execute scripts/enriquecer-pt.mjs aqui: ele depende do CLI codex,
+      # disponível apenas na licença e no ambiente locais, não no runner.
+      - name: Commitar dados quando houver mudança
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/trending.json data/historico.json
+
+          if git diff --cached --quiet; then
+            echo "Nenhuma mudança real nos dados; commit não será criado."
+            exit 0
+          fi
+
+          git commit -m "Atualiza ranking diário"
+          git push

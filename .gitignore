@@ -1,0 +1,23 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dependências e caches locais
+node_modules/
+.cache/
+
+# Temporários e logs
+*.tmp
+*.temp
+*.log
+tmp/
+
+# data/*.json não é ignorado: o ranking publicado precisa ser versionado.
